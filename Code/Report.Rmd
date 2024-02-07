@@ -1,1 +1,16 @@
-###
+# Time Tracking Project
+## Goals:
+1) To understand the number of “productive hours” in a week. Productive is defined as 
+hours logged to a particular project and not just to CIDA, BIOS, or the University. You 
+and I will have to work to define productive well. And the distribution of productive 
+hours across team members and by position type.
+2) To understand the total number of hours logged in a week and the distribution of total 
+number of hours logged and distribution by position type.
+3) To understand the amount of time/hours being spent on email and on service.
+4) To understand the number of projects worked on each week.
+5) To understand the total number of hours over 6 weeks on particular projects
+
+## Instructions
+1. Extract members' name from their email(primary) or toggl file name and create a id column(membersid.xlsx). 
+2. Merge table1 with personal table in ./DataRaw for getting position of each person(table2).  
+3. Format and concatenate each table2 to one table(members timetrack.xlsx) in ./DataProcessed. 
