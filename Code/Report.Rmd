@@ -13,4 +13,53 @@ number of hours logged and distribution by position type.
 ## Instructions
 1. Extract members' name from their email(primary) or toggl file name and create a id column(membersid.xlsx). 
 2. Merge table1 with personal table in ./DataRaw for getting position of each person(table2).  
-3. Format and concatenate each table2 to one table(members timetrack.xlsx) in ./DataProcessed. 
+3. Format and concatenate each table2 to one table(members timetrack.xlsx) in ./DataProcessed.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=F,warning=F,message=F}
+working_directory <-  'P:\\BERD\\toggl_timetrack'
+
+source(paste(working_directory, './Code/03_analysis.R',sep = '/'))
+```
+
+## Distributions
+### Number of hours logged each week
+```{r,echo=F}
+par(mfrow=c(2,2))
+plot_dist(df_log, 44)
+plot_dist(df_log, 45)
+plot_dist(df_log, 46)
+plot_dist(df_log, 47)
+plot_dist(df_log, 48)
+plot_dist(df_log, 49)
+plot_dist(df_log, 50)
+
+```
+
+### Number of hours email each week
+```{r,echo=F}
+par(mfrow=c(2,2))
+plot_dist(df_email, 44)
+plot_dist(df_email, 45)
+plot_dist(df_email, 46)
+plot_dist(df_email, 47)
+plot_dist(df_email, 48)
+plot_dist(df_email, 49)
+plot_dist(df_email, 50)
+
+```
+
+### Number of hours service each week
+```{r,echo=F}
+par(mfrow=c(2,2))
+plot_dist(df_service, 44)
+plot_dist(df_service, 45)
+plot_dist(df_service, 46)
+plot_dist(df_service, 47)
+plot_dist(df_service, 48)
+plot_dist(df_service, 49)
+plot_dist(df_service, 50)
+
+```
