@@ -4,11 +4,8 @@
 ### Author: Shuai Zhu
 ### Description: clean time tracking data
 ######################################
-
-library(dplyr)
-library(stringr)
+library(tidyverse)
 library(openxlsx)
-library(tidyr)
 ### setting working directory
 working_directory <-  'P:\\BERD\\toggl_timetrack'
 setwd(working_directory)
@@ -72,6 +69,87 @@ df <- df%>%
 
 res <- times(df$Duration) 
 df$`Duration(minutes)` <- (hours(res)*60 + minutes(res))/df$FTE
+
 df<- unique( df )
-write.xlsx(df, './DataProcessed/members timetrack.xlsx')
+# write.xlsx(df, './DataProcessed/members timetrack.xlsx')
+
+## add a service, admin and email variable.
+df <- read.xlsx("./DataProcessed/members timetrack.xlsx")%>%as_tibble(.)
+df_project_email <- read.xlsx("./DataProcessed/project_emials_highlighted1.xlsx")
+df_project_admin <- read.xlsx("./DataProcessed/project_tags_highlighted1.xlsx")
+df_project_email <- df_project_email%>%select(Project)%>%mutate(Email = T)
+df_project_admin <- df_project_admin%>%select(Project)%>%mutate(Admin = T)
+df <- merge(df,df_project_email,by = 'Project',all.x=T)%>%as.tibble(.)
+df <- merge(df,df_project_admin,by = 'Project',all.x=T)%>%as.tibble(.)
+df <- df%>%mutate(Email = case_when(Email==T&Tags=='Email'~T,
+                              Email==T&Tags=='Emails'~T,
+                              Email==T&Tags=='email'~T,
+                              .default = F))
+df <- df%>%mutate(Admin = case_when(Email==T&Tags=='Admin'~T,
+                              .default = F))
+df <- df%>%replace_na(list("Email"=F,'Admin'=F))
+df <- df%>%mutate(Service=case_when(str_detect(Project,regex("service", ignore_case = TRUE))~T,
+                    str_detect(Tags,regex("service", ignore_case = TRUE))~T,
+                    str_detect(Description, regex("service", ignore_case = TRUE))~T,
+                    .default = F))
+
+
+
+df$Tags <- df$Tags%>%str_replace('–','-')
+
+
+df$Serviceby <-  str_match(df%>%select(Tags)%>%unlist()%>%as.vector(.), regex('service\\s?-?\\s?(\\w+)',ignore_case = T))[,2]
+
+df$Serviceby <- df$Serviceby%>%str_replace('DEPT','BIOS')
+
+
+df%>%filter(Service==T)%>%view()
+write.xlsx(df,'./DataProcessed/members timetrack classify.xlsx')
+
+
+## convert wide to long
+
+df <- read.xlsx("./DataProcessed/members timetrack classify.xlsx")%>%as_tibble(.)
+# df%>%filter(is.na(Tags))%>%group_by(Project)%>%summarise(Count = n(), `Duration(minutes)`=sum(`Duration(minutes)`))%>%
+#  write.xlsx('./DataProcessed/Project with empty tags.xlsx')
+# df%>%filter(is.na(Tags)&is.na(Project))%>%write.xlsx('./DataProcessed/Rows without project and tags.xlsx')
+
+### detect primary and secondary tag
+
+df <- df%>%select(-c(Task,Billable, Start.date, Start.time, End.date, End.time,Email, Admin, Service ))
+
+
+df <- df%>%mutate(`Secondary tags` = case_when(str_detect(df$Tags,regex('admin', ignore_case=T))~'Admin',
+                                         .default = NA))
+
+df$`Primary tags` <- df$Tags%>%str_replace(regex('admin(\\s\\((.+)?\\))?', ignore =T),'')%>%str_replace('^, ','')
+
+
+df$`Primary tags`<- df$`Primary tags`%>%str_replace(regex('meeting(\\s\\((.+)?\\))', ignore =T),'Long meeting')
+
+
+primary_tags <- str_split(df$`Primary tags`,', ', simplify = T)
+primary_tags <- primary_tags%>%as_tibble()
+primary_tags[primary_tags==""]<-NA
+colnames(primary_tags) <- paste("primary",1:4,sep='')
+colnames(df)[2] <- 'Userid'
+df$`Recordsid` <- 1:nrow(df)
+df%>%select(Recordsid,everything())
+
+df_separate <- cbind(df,primary_tags)%>%as_tibble()%>%select(-c(`Primary tags`))
+df_separate <- df_separate%>%mutate(primary1=case_when(is.na(primary1)~`Secondary tags`,
+                                        .default = primary1))
+
+df_separate <- df_separate%>%pivot_longer(cols = starts_with("primary"),
+                           names_to = NULL,
+                           values_to ="Primary tags",
+                           values_drop_na = T
+  
+)
+
+df_separate <- df_separate %>%group_by(Recordsid)%>%
+  mutate(`Duration on one tag(mintues)`=case_when(`Primary tags`==regex('Meeting',ignore_case=T)~min(60,`Duration(minutes)`),
+                                                  `Primary tags`=='Long Meeting'~min(60,`Duration(minutes)`),
+                                                  `Primary tags`=='Email'|`Primary tags`=='email'~`Duration(minutes)`/3 ))
+
 

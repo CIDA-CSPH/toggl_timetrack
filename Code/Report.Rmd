@@ -63,3 +63,12 @@ plot_dist(df_service, 49)
 plot_dist(df_service, 50)
 
 ```
+
+### project 
+```{r,echo=F}
+knitr::kable(df_project%>%select('Project','hours'))
+```
+
+
+
+

@@ -16,7 +16,7 @@ working_directory <-  'P:\\BERD\\toggl_timetrack'
 setwd(working_directory)
 
 ### read members' time tracking data
-df <- read.xlsx('./DataProcessed/members timetrack.xlsx')%>%as_tibble(.)
+df <- read.xlsx('./DataProcessed/members timetrack classify.xlsx')%>%as_tibble(.)
 df <- df%>%select(-c(Start.date,Start.time,End.date,End.time))
 
 ### hours logged
@@ -24,16 +24,8 @@ df_log <- df%>%group_by(Week.number,id)%>%summarise(`logged(minutes)`=sum(`Durat
   mutate(`hours`=`logged(minutes)`/60)
 
 ### hours on email or service
-df <- df%>%mutate(Email=case_when(str_detect(Project,regex("email|emails", ignore_case = TRUE))~T,
-                                  str_detect(Tags,regex("email|emails", ignore_case = TRUE))~T,
-                                  str_detect(Description, regex("email|emails", ignore_case = TRUE))~T,
-                                  .default = F),
-                  Service=case_when(str_detect(Project,regex("service|services", ignore_case = TRUE))~T,
-                                    str_detect(Tags,regex("service|services", ignore_case = TRUE))~T,
-                                    str_detect(Description, regex("service|services", ignore_case = TRUE))~T,
-                                    .default = F))
 
-df_email <- df%>%filter(Email==T)%>%group_by(Week.number,id)%>%
+df_email <- df%>%filter(Email==T)%>%filter(Tags=='Email'|Tags=='email'|Tags=='Emails')%>%group_by(Week.number,id)%>%
   summarise(`email(minutes)`=sum(`Duration(minutes)`))%>%arrange(Week.number,id)%>%
   mutate(`hours`=`email(minutes)`/60)
 
@@ -48,6 +40,8 @@ plot_dist <- function(data, week){
   hist(df$hours,breaks=10,xlab='hours',main = paste('Distribution of week',week,sep = ' '))
 }
 
-
+### project - admin - email - service
+df_project <- df%>%filter(Email==TRUE|Admin==TRUE)%>%filter(Tags!='Email'&Tags!='email'&Tags!='Emails')%>%filter(Tags!='Admin'&Tags!='admin')%>%
+  group_by(Project)%>%summarise(`Duration(minutes)` = sum(`Duration(minutes)`))%>%mutate(hours=`Duration(minutes)`/60)
 
 
