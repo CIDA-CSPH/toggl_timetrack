@@ -6,6 +6,7 @@
 ######################################
 library(tidyverse)
 library(openxlsx)
+library(chron)
 ### setting working directory
 working_directory <-  'P:\\BERD\\toggl_timetrack'
 setwd(working_directory)
@@ -104,33 +105,38 @@ df$Serviceby <- df$Serviceby%>%str_replace('DEPT','BIOS')
 
 
 df%>%filter(Service==T)%>%view()
-write.xlsx(df,'./DataProcessed/members timetrack classify.xlsx')
+#write.xlsx(df,'./DataProcessed/members timetrack classify.xlsx')
+
+
 
 
 ## convert wide to long
 
-df <- read.xlsx("./DataProcessed/members timetrack classify.xlsx")%>%as_tibble(.)
+df <- read.xlsx("./DataProcessed/members timetrack classify.xlsx")%>%as_tibble(.)%>%
+  select(-c(Task,Billable, Start.date, Start.time, End.date, End.time,Email, Admin, Service ))%>%
+  mutate(`Secondary tags` = case_when(str_detect(df$Tags,regex('admin', ignore_case=T))~'Admin',
+#                                      str_detect(df$Tags,regex('Advising students', ignore_case=T))~'Advising students',
+#                                      str_detect(df$Tags,regex('Faculty/team mentoring', ignore_case=T))~'Faculty/team mentoring',
+                                      .default = NA))%>%filter(Tags!='Ooo')
 # df%>%filter(is.na(Tags))%>%group_by(Project)%>%summarise(Count = n(), `Duration(minutes)`=sum(`Duration(minutes)`))%>%
 #  write.xlsx('./DataProcessed/Project with empty tags.xlsx')
 # df%>%filter(is.na(Tags)&is.na(Project))%>%write.xlsx('./DataProcessed/Rows without project and tags.xlsx')
 
 ### detect primary and secondary tag
 
-df <- df%>%select(-c(Task,Billable, Start.date, Start.time, End.date, End.time,Email, Admin, Service ))
-
-
-df <- df%>%mutate(`Secondary tags` = case_when(str_detect(df$Tags,regex('admin', ignore_case=T))~'Admin',
-                                         .default = NA))
-
 df$`Primary tags` <- df$Tags%>%str_replace(regex('admin(\\s\\((.+)?\\))?', ignore =T),'')%>%str_replace('^, ','')
 
 
 df$`Primary tags`<- df$`Primary tags`%>%str_replace(regex('meeting(\\s\\((.+)?\\))', ignore =T),'Long meeting')
+df <- df%>%mutate(`Primary tags` = case_when(!is.na(Serviceby)~paste('Service -',Serviceby),
+                                                            .default = `Primary tags`))
 
+primary_tags <- str_split(df$`Primary tags`,',', simplify = T)
 
-primary_tags <- str_split(df$`Primary tags`,', ', simplify = T)
 primary_tags <- primary_tags%>%as_tibble()
 primary_tags[primary_tags==""]<-NA
+primary_tags <- primary_tags %>%
+  mutate_if(is.character, str_trim)
 colnames(primary_tags) <- paste("primary",1:4,sep='')
 colnames(df)[2] <- 'Userid'
 df$`Recordsid` <- 1:nrow(df)
@@ -147,9 +153,25 @@ df_separate <- df_separate%>%pivot_longer(cols = starts_with("primary"),
   
 )
 
+
+
 df_separate <- df_separate %>%group_by(Recordsid)%>%
-  mutate(`Duration on one tag(mintues)`=case_when(`Primary tags`==regex('Meeting',ignore_case=T)~min(60,`Duration(minutes)`),
-                                                  `Primary tags`=='Long Meeting'~min(60,`Duration(minutes)`),
-                                                  `Primary tags`=='Email'|`Primary tags`=='email'~`Duration(minutes)`/3 ))
+  mutate(`Duration of tag(mintues)`=case_when(`Primary tags`==regex('Meeting',ignore_case=T)~min(60,`Duration(minutes)`),
+                                              `Primary tags`=='Long Meeting'~min(90,`Duration(minutes)`),
+                                              `Primary tags`==regex('Email',ignore_case=T)&n()!=1~`Duration(minutes)`/3 ,
+                                              `Primary tags`==regex('Email',ignore_case=T)&n()==1~`Duration(minutes)`,
+                                              .default=0 ))
+
+df_separate <- df_separate %>%group_by(Recordsid)%>%
+  mutate(`Duration of tag(mintues)`=case_when(`Duration of tag(mintues)`==0~ (`Duration(minutes)`-sum(`Duration of tag(mintues)`))/sum(`Duration of tag(mintues)`==0),
+                                                  .default=`Duration of tag(mintues)`))
+df_separate%>%write.xlsx('./DataProcessed/members timetrack tags.xlsx')
+
+
+
+
+
+
+
 
 

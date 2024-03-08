@@ -23,6 +23,13 @@ working_directory <-  'P:\\BERD\\toggl_timetrack'
 
 source(paste(working_directory, './Code/03_analysis.R',sep = '/'))
 ```
+## Empty values
+```{r,echo=F}
+tibble(column = colnames(df), '# NA'= colSums(is.na(df)))[c(1,7),]%>%
+  mutate(`Duration(hours) of NA`=c(df%>%filter(is.na(Project))%>%select(`Duration(minutes)`)%>%sum()/60,
+                             df%>%filter(is.na(Tags))%>%select(`Duration(minutes)`)%>%sum()/60))%>%knitr::kable()
+```
+
 
 ## Distributions
 ### Number of hours logged each week
@@ -66,9 +73,22 @@ plot_dist(df_service, 50)
 
 ### project 
 ```{r,echo=F}
-knitr::kable(df_project%>%select('Project','hours'))
+#knitr::kable(df_project%>%select('Project','hours'))
+
 ```
 
+### Tags
+
+Primary tags
+```{r,echo=F}
+kable1(df_tags,44)
+kable1(df_tags,45)
+kable1(df_tags,46)
+kable1(df_tags,47)
+kable1(df_tags,48)
+kable1(df_tags,49)
+kable1(df_tags,50)
+```
 
 
 

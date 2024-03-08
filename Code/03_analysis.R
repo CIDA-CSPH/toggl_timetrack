@@ -41,7 +41,20 @@ plot_dist <- function(data, week){
 }
 
 ### project - admin - email - service
-df_project <- df%>%filter(Email==TRUE|Admin==TRUE)%>%filter(Tags!='Email'&Tags!='email'&Tags!='Emails')%>%filter(Tags!='Admin'&Tags!='admin')%>%
-  group_by(Project)%>%summarise(`Duration(minutes)` = sum(`Duration(minutes)`))%>%mutate(hours=`Duration(minutes)`/60)
+#df_project <- df%>%
+
+### tags
+df_tags <- read.xlsx('./DataProcessed/members timetrack tags.xlsx')%>%as_tibble()%>%group_by(Week.number,str_to_title(str_to_lower(`Primary.tags`)))%>%
+  summarise(`Duration(hours)` = round(sum(`Duration.of.tag(mintues)`)/60,2) )%>%
+  arrange(desc(`Duration(hours)`))
+
+colnames(df_tags) <- c('Week','Primary.tags', 'Duration(hours)')
+kable1 <- function(data,weeknumber){
+  df <- data%>%filter(Week==weeknumber)
+  df <- df%>%mutate(rate=`Duration(hours)`/sum(`Duration(hours)`))
+  knitr::kable(df%>%slice(1:10))
+}
+### teaching
+df%>%filter(Tags=='Teaching')%>%group_by(id,Week.number)
 
 
