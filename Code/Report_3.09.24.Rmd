@@ -1,0 +1,144 @@
+---
+title: Time Tracking Report for November-Dec 2023
+   
+author: |
+  | 
+  | Biostatistician: Shuai Zhen and Nichole E Carlson, PhD
+  | Investigator: Nichole E Carlson, PhD
+  | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
+output:
+  
+  html_document:
+    highlight: espresso
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '2'
+  pdf_document:
+    
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(kableExtra)
+
+repo_path <- "/Users/carlsonn/Repositories/BERD/BERD_TimeTracking"
+path_pdrive <- "P:/BERD/toggl_timetrack/" #Check the name of this path
+
+path_figures <- paste0(path_pdrive,"figures/")
+path_results <- paste0(path_pdrive,"results/")
+```
+
+
+# Introduction
+
+INSERT THE PURPOSE OF THE PROBLEM
+
+# Data Cleaning
+Each individual was assigned a unique ID and a job category based on their title. One individual was excluded because the Tags used could not be divided into the other categories. Individuals with total FTE less than full time had their hours multiplied to represent a full time position.  When students are separated. The actual hours are represented because all student positions are 50% time.
+
+Email was defined as Tags with email and Projects that indicated general email checking rather than project specific email checking. In the event that multiple Tags were specified. 1/3 of the total minutes in that Tag were assigned to email and then the Project used to define if the email was general email or project specific email. We also computed a percentage of time on email by individual for each week variable.
+
+Service was defined as a Tag or Project with Service in the title. We then created the unit of service as the serviceby variable. We also computed a percentage of time on service by individual for each week variable.
+
+To create an Admin category, we identified entries with Admin in the Tag or Project and hand categorized the lines with Admin not assigned to a Project to determine if the Admin was general admin or project specific admin. Admin represents general administration not associated with Project, Service, or Email. We also computer a percentage of time on service by individual for each week variable.
+
+Many entries had multiple Tags for the Project.  We used the following rules.  Meetings without prep were assigned 60 min and the rest of the Tags divided evenly across any remaining minutes unless email was included. When email was included it was given 1/3 of the remaining minutes and the other 2/3's divided across any remaining minutes. Meetings including prep were classified as Long Meetings and assigned 75min (or 90min?) and the remaining minutes divided as above.
+
+ProjectHours was created by subtracting the number of hours for email, service, and administration from the total number of weekly hours for an individual.  [Note: I need to figure out the target Project Hours for each individual based on their FTE sheet.  This is because some service is paid for with FTE and that service shouldn't be subtracted from the ProjectHours.]
+
+Percentage of time spent on a task was computed by individual and week as the total number of hours on a primary tag divided by the total number of ProjectHours for the week. 
+
+To do: I want to figure out an over and under hours measure but this is going to require me to put in each individuals expected number of hours.  I will need to look at their funding sheets and make this variable.
+
+# Statistical Analysis
+Summary measures and histograms of the average number of weekly hours per individual were created for the entire 6 week period and by title (PhD, Masters, Students, Admin). Summary measures and histograms of the average number of weekly hours per individual by week. Similarly, summary measures of average number of weekly hours per individual for the entire 6 week period and by title for admin, email, service, and projects were also created and stratified by title.  For these analyses the administrators and directors were removed from the calculations as their positions have a different expectation for non-project work.
+
+We also computed the total number of projects worked on each week for each individual and created summary measures and histograms across all 6 weeks and stratified by title and then stratified by week. We also computed the average number of hours spent on an individual project and created summary measures and histograms across all 6 weeks and by title and then stratified by week. 
+
+To understand the percentage of time spend on specific tasks like data management, analysis/coding, report writing, paper revisions, grant writing, etc. we created primary tags as described earlier and computed summary measures and histograms of the percentage of time spent on each task across all 6 weeks and then stratified by title. We then looked at patterns by week.  
+
+
+```{r readin,echo=FALSE,results='asis'}
+###Here you will load your tables
+
+###Table 1 should be a summary of all the individuals.  Describe the population that you analyzed.
+t1_filename <- "Table1_withMissing.RDS"
+t1_codefilename <- "03_analysis.R"
+t1_objectname <- "df_log" ###This is the name in your code file.  We created this to make it easy to debug later if needed.
+t1 <- readRDS(paste0(path_figures,t1_filename)) ###This is the object for this report when you make the table using kable below.
+
+###Then make other Tables and figures in 1 (or more) code files and read them in here for our report
+t2_filename <- "Table2_SummaryAllWeeks.RDS"
+t2_codefilename <- "2_TablesFigures.R"
+t2_objectname <- "wt2"
+t2 <- readRDS(paste0(path_figures,t2_filename))
+
+g2_filename <- "Figure2.png"
+g2_codefilename <- "2_TablesFigures.R"
+g2_objectname <- "htmp"
+g2_path <- paste0(path_figures,g2_filename)
+
+
+t3_filename <- "Table3_VAS_OverOberSE_v2.RDS"
+t3_codefilename <- "2_TablesFigures.R"
+t3_objectname <- "newt3"
+t3 <- readRDS(paste0(path_figures,t3_filename))
+
+g3_filename <- "Figure3.png"
+g3_codefilename <- "2_TablesFigures.R"
+g3_objectname <- "htmp"
+g3_path <- paste0(path_figures,g3_filename)
+
+```
+
+
+# Results
+
+Write paragraphs describing each analysis and the results and embed the table and figures along the way.
+
+```{r,echo=FALSE,results='asis'}
+options(knitr.kable.NA = '')
+t1 %>%
+  kable(digits=2) %>%
+  kable_styling()
+```
+
+
+Describe the findings from the next two tables here
+
+```{r,echo=FALSE,results='asis'}
+options(knitr.kable.NA = '')
+t2 %>%
+  kable(digits=2) %>%
+  kable_styling()
+```
+
+
+```{r echo=FALSE, out.width = '100%'}
+knitr::include_graphics(g2_path)
+```
+
+Describe the findings from the next two tables here
+
+```{r,echo=FALSE,results='asis'}
+options(knitr.kable.NA = '')
+t3 %>%
+  kable(digits=2) %>%
+  kable_styling()
+```
+
+
+```{r echo=FALSE, out.width = '100%'}
+knitr::include_graphics(g3_path)
+```
+
+
+
+

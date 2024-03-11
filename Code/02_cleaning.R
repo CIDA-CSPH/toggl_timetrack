@@ -6,7 +6,6 @@
 ######################################
 library(tidyverse)
 library(openxlsx)
-library(chron)
 ### setting working directory
 working_directory <-  'P:\\BERD\\toggl_timetrack'
 setwd(working_directory)
@@ -62,6 +61,8 @@ df$`Week.number` <- format(df_merged$Start.date,"%V")
 
 ### calculate working hours
 df <- df_merged
+df_withouttagsandproject <- read.xlsx('./DataProcessed/Rows without project and tags_NEC.xlsx')%>%as_tibble()
+merge(df,df_withouttagsandproject%>%filter(!is.na(Task)),)
 
 df <- df%>%
   mutate(Start.date = as.Date(Start.date, origin="1899-12-30"),
@@ -71,8 +72,9 @@ df <- df%>%
 res <- times(df$Duration) 
 df$`Duration(minutes)` <- (hours(res)*60 + minutes(res))/df$FTE
 
-df<- unique( df )
-# write.xlsx(df, './DataProcessed/members timetrack.xlsx')
+wt1<- unique( df )
+# write.xlsx(wt1, './DataProcessed/members timetrack.xlsx')
+read.xlsx('./DataProcessed/members timetrack.xlsx')%>%saveRDS('./figures/Table1_withMissing.RDS')
 
 ## add a service, admin and email variable.
 df <- read.xlsx("./DataProcessed/members timetrack.xlsx")%>%as_tibble(.)
@@ -106,8 +108,6 @@ df$Serviceby <- df$Serviceby%>%str_replace('DEPT','BIOS')
 
 df%>%filter(Service==T)%>%view()
 #write.xlsx(df,'./DataProcessed/members timetrack classify.xlsx')
-
-
 
 
 ## convert wide to long

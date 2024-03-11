@@ -90,5 +90,24 @@ kable1(df_tags,49)
 kable1(df_tags,50)
 ```
 
+### teaching
+
+```{r}
+
+par(mfrow=c(2,4))
+for(i in c(44:50)){
+  plot_dist(df_teaching,i)
+}
+
+```
+
+
+
+
+
+
+
+
+
 
 
